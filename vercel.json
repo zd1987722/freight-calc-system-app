@@ -1,0 +1,10 @@
+{
+  "buildCommand": "pnpm build",
+  "outputDirectory": "dist/client",
+  "installCommand": "pnpm install",
+  "framework": null,
+  "rewrites": [
+    { "source": "/trpc/:path*", "destination": "/api/trpc" },
+    { "source": "/api/:path*", "destination": "/api/:path*" }
+  ]
+}
