@@ -2,9 +2,10 @@
   "buildCommand": "pnpm build",
   "outputDirectory": "dist/client",
   "installCommand": "pnpm install",
-  "framework": null,
+  "framework": "vite",
   "rewrites": [
-    { "source": "/trpc/:path*", "destination": "/api/trpc" },
-    { "source": "/api/:path*", "destination": "/api/:path*" }
+    { "source": "/trpc/:path*", "destination": "/api/index.ts" },
+    { "source": "/api/:path*", "destination": "/api/index.ts" },
+    { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
