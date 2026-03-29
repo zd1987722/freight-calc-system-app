@@ -7,13 +7,13 @@ import { rateTables, rateSteps, shipOwners, ports } from "../../db/schema.js";
 export const rateTableRouter = router({
   // 获取所有费率表（含关联的船东和港口名称）
   list: protectedProcedure.query(async () => {
-    const tables = db.query.rateTables.findMany({
+    const tables = await db.query.rateTables.findMany({
       where: eq(rateTables.isDeleted, false),
     });
 
     // 手动关联数据
-    const allOwners = db.query.shipOwners.findMany();
-    const allPorts = db.query.ports.findMany();
+    const allOwners = await db.query.shipOwners.findMany();
+    const allPorts = await db.query.ports.findMany();
 
     const ownerMap = new Map(allOwners.map(o => [o.id, o]));
     const portMap = new Map(allPorts.map(p => [p.id, p]));
@@ -30,13 +30,13 @@ export const rateTableRouter = router({
   getById: protectedProcedure
     .input(z.object({ id: z.number() }))
     .query(async ({ input }) => {
-      const table = db.query.rateTables.findFirst({
+      const table = await db.query.rateTables.findFirst({
         where: eq(rateTables.id, input.id),
       });
 
       if (!table) throw new Error("费率表不存在");
 
-      const steps = db.query.rateSteps.findMany({
+      const steps = await db.query.rateSteps.findMany({
         where: eq(rateSteps.rateTableId, input.id),
       });
 
@@ -62,17 +62,17 @@ export const rateTableRouter = router({
     .mutation(async ({ input, ctx }) => {
       const { steps, ...tableData } = input;
 
-      const result = db.insert(rateTables).values({
+      const result = await db.insert(rateTables).values({
         ...tableData,
         createdBy: ctx.user.id,
       }).returning().get();
 
       for (const step of steps) {
-        db.insert(rateSteps).values({
+        await db.insert(rateSteps).values({
           rateTableId: result.id,
           quantity: step.quantity,
           rate: step.rate,
-        }).run();
+        });
       }
 
       return result;
@@ -93,19 +93,19 @@ export const rateTableRouter = router({
     .mutation(async ({ input, ctx }) => {
       const { id, steps, ...data } = input;
 
-      db.update(rateTables)
+      await db.update(rateTables)
         .set({ ...data, updatedBy: ctx.user.id, updatedAt: new Date().toISOString() })
         .where(eq(rateTables.id, id))
-        .run();
+        ;
 
       // 删除旧阶梯，插入新阶梯
-      db.delete(rateSteps).where(eq(rateSteps.rateTableId, id)).run();
+      await db.delete(rateSteps).where(eq(rateSteps.rateTableId, id));
       for (const step of steps) {
-        db.insert(rateSteps).values({
+        await db.insert(rateSteps).values({
           rateTableId: id,
           quantity: step.quantity,
           rate: step.rate,
-        }).run();
+        });
       }
 
       return { success: true };
@@ -115,10 +115,10 @@ export const rateTableRouter = router({
   delete: adminProcedure
     .input(z.object({ id: z.number() }))
     .mutation(async ({ input }) => {
-      db.update(rateTables)
+      await db.update(rateTables)
         .set({ isDeleted: true, updatedAt: new Date().toISOString() })
         .where(eq(rateTables.id, input.id))
-        .run();
+        ;
       return { success: true };
     }),
 });

@@ -6,7 +6,7 @@ import { ports } from "../../db/schema.js";
 
 export const portRouter = router({
   list: protectedProcedure.query(async () => {
-    return db.query.ports.findMany({
+    return await db.query.ports.findMany({
       where: eq(ports.isDeleted, false),
     });
   }),
@@ -19,7 +19,7 @@ export const portRouter = router({
       country: z.string().optional(),
     }))
     .mutation(async ({ input }) => {
-      return db.insert(ports).values(input).returning().get();
+      return (await db.insert(ports).values(input).returning())[0];
     }),
 
   update: adminProcedure
@@ -32,20 +32,20 @@ export const portRouter = router({
     }))
     .mutation(async ({ input }) => {
       const { id, ...data } = input;
-      db.update(ports)
+      await db.update(ports)
         .set({ ...data, updatedAt: new Date().toISOString() })
         .where(eq(ports.id, id))
-        .run();
+        ;
       return { success: true };
     }),
 
   delete: adminProcedure
     .input(z.object({ id: z.number() }))
     .mutation(async ({ input }) => {
-      db.update(ports)
+      await db.update(ports)
         .set({ isDeleted: true, updatedAt: new Date().toISOString() })
         .where(eq(ports.id, input.id))
-        .run();
+        ;
       return { success: true };
     }),
 });

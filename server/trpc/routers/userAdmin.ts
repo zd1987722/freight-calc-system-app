@@ -8,7 +8,7 @@ import { users } from "../../db/schema.js";
 export const userAdminRouter = router({
   // 获取所有用户列表
   list: adminProcedure.query(async () => {
-    const allUsers = db.query.users.findMany();
+    const allUsers = await db.query.users.findMany();
     return allUsers.map(u => ({
       id: u.id,
       name: u.name,
@@ -30,10 +30,10 @@ export const userAdminRouter = router({
       role: z.enum(["user", "admin"]),
     }))
     .mutation(async ({ input }) => {
-      db.update(users)
+      await db.update(users)
         .set({ role: input.role, updatedAt: new Date().toISOString() })
         .where(eq(users.id, input.id))
-        .run();
+        ;
       return { success: true };
     }),
 
@@ -44,10 +44,10 @@ export const userAdminRouter = router({
       isActive: z.boolean(),
     }))
     .mutation(async ({ input }) => {
-      db.update(users)
+      await db.update(users)
         .set({ isActive: input.isActive, updatedAt: new Date().toISOString() })
         .where(eq(users.id, input.id))
-        .run();
+        ;
       return { success: true };
     }),
 
@@ -63,7 +63,7 @@ export const userAdminRouter = router({
     }))
     .mutation(async ({ input }) => {
       const hash = hashSync(input.password, 10);
-      const result = db.insert(users).values({
+      const result = await db.insert(users).values({
         openId: `local-${Date.now()}`,
         name: input.name,
         username: input.username,
@@ -84,10 +84,10 @@ export const userAdminRouter = router({
     }))
     .mutation(async ({ input }) => {
       const hash = hashSync(input.newPassword, 10);
-      db.update(users)
+      await db.update(users)
         .set({ passwordHash: hash, updatedAt: new Date().toISOString() })
         .where(eq(users.id, input.id))
-        .run();
+        ;
       return { success: true };
     }),
 });

@@ -7,7 +7,7 @@ import { shipOwners } from "../../db/schema.js";
 export const ownerRouter = router({
   // 获取所有船东（排除已删除）
   list: protectedProcedure.query(async () => {
-    return db.query.shipOwners.findMany({
+    return await db.query.shipOwners.findMany({
       where: eq(shipOwners.isDeleted, false),
     });
   }),
@@ -22,7 +22,7 @@ export const ownerRouter = router({
       remark: z.string().optional(),
     }))
     .mutation(async ({ input }) => {
-      const result = db.insert(shipOwners).values(input).returning().get();
+      const result = (await db.insert(shipOwners).values(input).returning())[0];
       return result;
     }),
 
@@ -38,10 +38,10 @@ export const ownerRouter = router({
     }))
     .mutation(async ({ input }) => {
       const { id, ...data } = input;
-      db.update(shipOwners)
+      await db.update(shipOwners)
         .set({ ...data, updatedAt: new Date().toISOString() })
         .where(eq(shipOwners.id, id))
-        .run();
+        ;
       return { success: true };
     }),
 
@@ -49,10 +49,10 @@ export const ownerRouter = router({
   delete: adminProcedure
     .input(z.object({ id: z.number() }))
     .mutation(async ({ input }) => {
-      db.update(shipOwners)
+      await db.update(shipOwners)
         .set({ isDeleted: true, updatedAt: new Date().toISOString() })
         .where(eq(shipOwners.id, input.id))
-        .run();
+        ;
       return { success: true };
     }),
 });

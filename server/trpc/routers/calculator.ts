@@ -117,7 +117,7 @@ export const calculateRouter = router({
 
       // 查找有效的费率表
       const today = new Date().toISOString().split("T")[0];
-      const allTables = db.query.rateTables.findMany({
+      const allTables = await db.query.rateTables.findMany({
         where: and(
           eq(rateTables.ownerId, ownerId),
           eq(rateTables.loadPortId, loadPortId),
@@ -135,7 +135,7 @@ export const calculateRouter = router({
       }
 
       // 获取阶梯数据
-      const steps = db.query.rateSteps.findMany({
+      const steps = await db.query.rateSteps.findMany({
         where: eq(rateSteps.rateTableId, validTable.id),
       });
 
@@ -148,7 +148,7 @@ export const calculateRouter = router({
       const totalFreight = Math.round(confirmedQuantity * result.rate * 100) / 100;
 
       // 记录计算历史
-      db.insert(calculationHistory).values({
+      await db.insert(calculationHistory).values({
         userId: ctx.user.id,
         ownerId,
         loadPortId,
@@ -157,7 +157,7 @@ export const calculateRouter = router({
         calculatedRate: result.rate.toString(),
         totalFreight: totalFreight.toString(),
         calculationDetails: JSON.stringify(result.details),
-      }).run();
+      });
 
       return {
         rate: result.rate,
@@ -172,19 +172,19 @@ export const calculateRouter = router({
     .query(async ({ input, ctx }) => {
       const limit = input?.limit ?? 100;
 
-      const records = db.query.calculationHistory.findMany({
+      const records = await db.query.calculationHistory.findMany({
         orderBy: [desc(calculationHistory.createdAt)],
         limit,
       });
 
       // 关联船东和港口名
-      const allOwners = db.query.shipOwners.findMany();
-      const allPorts = db.query.ports.findMany();
+      const allOwners = await db.query.shipOwners.findMany();
+      const allPorts = await db.query.ports.findMany();
       const ownerMap = new Map(allOwners.map(o => [o.id, o.name]));
       const portMap = new Map(allPorts.map(p => [p.id, p.nameCn]));
 
       // 关联用户名
-      const allUsers = db.query.users.findMany();
+      const allUsers = await db.query.users.findMany();
       const userMap = new Map(allUsers.map(u => [u.id, u.name || u.username || "未知"]));
 
       return records.map(r => ({
@@ -200,7 +200,7 @@ export const calculateRouter = router({
   getAvailablePorts: protectedProcedure
     .input(z.object({ ownerId: z.number() }))
     .query(async ({ input }) => {
-      const tables = db.query.rateTables.findMany({
+      const tables = await db.query.rateTables.findMany({
         where: and(
           eq(rateTables.ownerId, input.ownerId),
           eq(rateTables.status, true),
@@ -211,7 +211,7 @@ export const calculateRouter = router({
       const loadPortIds = new Set(tables.map(t => t.loadPortId));
       const dischargePortIds = new Set(tables.map(t => t.dischargePortId));
 
-      const allPorts = db.query.ports.findMany({
+      const allPorts = await db.query.ports.findMany({
         where: eq(ports.isDeleted, false),
       });
 
@@ -225,7 +225,7 @@ export const calculateRouter = router({
   getAvailableDischargePorts: protectedProcedure
     .input(z.object({ ownerId: z.number(), loadPortId: z.number() }))
     .query(async ({ input }) => {
-      const tables = db.query.rateTables.findMany({
+      const tables = await db.query.rateTables.findMany({
         where: and(
           eq(rateTables.ownerId, input.ownerId),
           eq(rateTables.loadPortId, input.loadPortId),
@@ -235,7 +235,7 @@ export const calculateRouter = router({
       });
 
       const dischargePortIds = new Set(tables.map(t => t.dischargePortId));
-      const allPorts = db.query.ports.findMany({
+      const allPorts = await db.query.ports.findMany({
         where: eq(ports.isDeleted, false),
       });
 

@@ -48,10 +48,10 @@ export const authRouter = router({
       }
 
       // 更新最后登录时间
-      db.update(users)
+      await db.update(users)
         .set({ lastSignedIn: new Date().toISOString() })
         .where(eq(users.id, user.id))
-        .run();
+        ;
 
       // 生成 JWT
       const token = signToken({
@@ -116,10 +116,10 @@ export const profileRouter = router({
       }
 
       const newHash = hashSync(input.newPassword, 10);
-      db.update(users)
+      await db.update(users)
         .set({ passwordHash: newHash, updatedAt: new Date().toISOString() })
         .where(eq(users.id, ctx.user.id))
-        .run();
+        ;
 
       return { success: true, message: "密码修改成功" };
     }),

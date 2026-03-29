@@ -3,7 +3,9 @@
   "compilerOptions": {
     "module": "ESNext",
     "outDir": "./dist",
-    "noEmit": false
+    "noEmit": false,
+    "declaration": false,
+    "declarationMap": false
   },
   "include": ["server/**/*", "shared/**/*"],
   "exclude": ["node_modules", "dist", "client"]
